@@ -45,10 +45,12 @@ footer{margin-top:36px;color:var(--sub);font-size:13px}
 <body>
 <main>
   <h1>CabinPilot 座舱智能测试机器人</h1>
-  <p class="lead">用一句话下达座舱测试任务，自动完成“读用例 → 在车机上执行 → 视觉 / 语音判定 → 提缺陷 → 报告”。点“打开交互演示”可以自己操作（回放一次真实运行，不连服务器）；下面是其中的三个画面，点标签或按左右键切换。演示车型均为虚构。</p>
+  <p class="lead">用一句话下达座舱测试任务，自动完成“读用例 → 在车机上执行 → 视觉 / 语音判定 → 提缺陷 → 报告”。上面三个演示都可以自己点（回放真实运行的录像，不连服务器）：<b>测试执行</b>是台架页面跑用例，<b>用例生成</b>是从 PRD 生成、审核、入库到生成测试代码并试跑，<b>多台架联动</b>是三台台架同时跑用例集、其中一台发现缺陷。下面是测试执行的三个画面，点标签或按左右键切换。演示车型均为虚构。</p>
   <nav class="links" aria-label="链接">
     <a href="https://github.com/feihuiwu2022/cabin-test-agent">源代码（GitHub）</a>
-    <a class="go" href="demo/">▶ 打开交互演示</a>
+    <a class="go" href="demo/">▶ 测试执行演示</a>
+    <a class="go" href="demo-cases/">▶ 用例生成演示</a>
+    <a class="go" href="demo-board/#rigs">▶ 多台架联动演示</a>
     <a href="#arch">架构</a>
     <a href="https://github.com/feihuiwu2022/cabin-test-agent/blob/main/docs/ARCHITECTURE.md">架构说明（文档）</a>
   </nav>

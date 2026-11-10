@@ -108,6 +108,6 @@ export async function install() {
   const bar = document.createElement('div')
   bar.className = 'demo-bar'
   bar.innerHTML = '静态演示：回放 SimCar 模拟车机上的一次真实运行，不连服务器。' +
-    '<a href="../">返回介绍页</a><a href="https://github.com/feihuiwu2022/cabin-test-agent">源代码</a>'
+    '<a href="../demo/">测试执行</a><a href="../demo-cases/">用例生成</a><a href="../demo-board/">多台架看板</a><a href="../">介绍页</a>'
   document.body.prepend(bar)
 }

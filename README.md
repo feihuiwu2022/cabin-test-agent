@@ -1,6 +1,6 @@
 # CabinPilot 座舱智能测试机器人
 
-**[English](#english)** · [▶ 交互演示](https://feihuiwu2022.github.io/cabin-test-agent/demo/) · [介绍页](https://feihuiwu2022.github.io/cabin-test-agent/) · [架构](docs/ARCHITECTURE.md)
+**[English](#english)** · [▶ 测试执行演示](https://feihuiwu2022.github.io/cabin-test-agent/demo/) · [▶ 用例生成演示](https://feihuiwu2022.github.io/cabin-test-agent/demo-cases/) · [▶ 多台架联动演示](https://feihuiwu2022.github.io/cabin-test-agent/demo-board/#rigs) · [介绍页](https://feihuiwu2022.github.io/cabin-test-agent/) · [架构](docs/ARCHITECTURE.md)
 
 用一句话下达座舱测试任务，自动完成“读用例 → 在车机上执行 → 视觉 / 语音判定 → 提缺陷 → 报告”。
 另有一条用例生产线：PRD（Markdown / Word / 飞书文档）→ 需求抽取 → 用例生成与 AI 自检 → 人工审核入库 → 自动生成测试代码并在台架上首次试跑。
@@ -25,7 +25,10 @@
 
 ## 在线演示
 
-- **[交互演示](https://feihuiwu2022.github.io/cabin-test-agent/demo/)**：真实的演示主页，回放一次在 SimCar 模拟车机上的真实运行（系统设置调光、语音开启空调两条用例），不连服务器，打开就能点。
+- **静态交互演示**（真实页面回放一次真实运行的录像，不连服务器，打开就能点）：
+  - [测试执行](https://feihuiwu2022.github.io/cabin-test-agent/demo/)：台架页面跑“系统设置调光”“语音开启空调”两条用例；
+  - [用例生成](https://feihuiwu2022.github.io/cabin-test-agent/demo-cases/)：示例 PRD → 需求抽取 → 生成用例 → AI 自检（查出 3 条与库里重复）→ 审核入库 → 生成测试代码 → 首次试跑；
+  - [多台架联动](https://feihuiwu2022.github.io/cabin-test-agent/demo-board/#rigs)：三台台架（不同车型）同时跑用例集，B3 上“调到 24 度”温度没生效，自动复测后生成缺陷候选待审核。
 - **自己跑完整版**：公开演示镜像（仓库根目录 `Dockerfile`）带访客模式、只读配置和每日调用上限，部署方法见 [deploy/README.md](deploy/README.md)。模型密钥只放在服务器环境变量里。
 
 ## 快速开始（本地）
@@ -198,7 +201,7 @@ uv run python apps/agent/scripts/brightness_e2e.py
 
 Stack: FastAPI, React + Vite, Anthropic-compatible LLM API (MiniMax by default), sherpa-onnx SenseVoice (offline ASR), Playwright (SimCar).
 
-Try the [interactive demo](https://feihuiwu2022.github.io/cabin-test-agent/demo/) (a replay of a real run, no server needed), or run it locally: put `CABIN_LLM_API_KEY` in `.env`, then
+Try the interactive demos — [test run](https://feihuiwu2022.github.io/cabin-test-agent/demo/), [case generation](https://feihuiwu2022.github.io/cabin-test-agent/demo-cases/), [multi-rig board](https://feihuiwu2022.github.io/cabin-test-agent/demo-board/#rigs) (replays of real runs, no server needed), or run it locally: put `CABIN_LLM_API_KEY` in `.env`, then
 
 ```bash
 docker build -t cabinpilot-demo . && docker run --env-file .env -p 7860:7860 cabinpilot-demo

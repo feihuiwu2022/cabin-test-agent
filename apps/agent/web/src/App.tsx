@@ -149,6 +149,7 @@ export default function App() {
           {s.user
             ? <span className="chip"><span className="dot" />{s.user}</span>
             : <a className="btn" href="/auth/login">登录</a>}
+          {import.meta.env.VITE_DEMO && <><a className="btn primary" href="../demo-cases/">📄 用例生成演示</a><a className="btn primary" href="../demo-board/#rigs">🖥 多台架联动演示</a></>}
           {cloud && <a className="btn primary" href={`${cloud}/cases`} target="_blank" rel="noreferrer" title="用例生成和审核在云端">📄 用例工作台</a>}
           <button className={`btn ${handsfree ? 'on' : ''}`} onClick={toggleHandsfree} title="浏览器端 VAD 自动切句；播报中说话可打断">{handsfree ? '🎙 免提监听中' : '🎙 免提监听'}</button>
           {handsfree && <button className={`btn ${wakeReq ? 'on' : ''}`} onClick={() => setWakeReq(!wakeReq)} title="开启后需以“你好小禾”或“hello xiaohe”开头唤醒，30 秒内连续对话免唤醒">{wakeReq ? '唤醒词：你好小禾' : '唤醒词：关'}</button>}

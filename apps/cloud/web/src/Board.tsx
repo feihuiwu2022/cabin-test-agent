@@ -19,7 +19,7 @@ type Kpi = { finder: string; confirmed: number; linked: number; rejected: number
 type Matrix = { models: { code: string; name: string }[]; rows: { case_id: string; title: string; module: string; cells: Record<string, string> }[] }
 type Data = { now: number; rigs: Rig[]; runs: Run[]; defects: Defect[]; gaps: Gap[]; stats: Stat[]; regressions: Regression[]; kpi: Kpi[] }
 
-const POLL_MS = 5000
+const POLL_MS = import.meta.env.VITE_DEMO ? 1000 : 5000  // 静态演示回放时刷新快一些
 const TABS = [['home', '总览'], ['rigs', '台架'], ['batches', '批次'], ['review', '待审核'], ['matrix', '覆盖矩阵']]
 const STATUS: Record<string, string> = { queued: '排队', running: '执行中', cancelling: '取消中', cancelled: '已取消', done: '完成' }
 const VERDICT: Record<string, string> = { passed: '通过', failed: '失败', blocked: '阻塞', flaky: '不稳定' }

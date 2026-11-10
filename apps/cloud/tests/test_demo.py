@@ -51,12 +51,12 @@ async def test_seed_cases_are_runnable(monkeypatch):
     seed = runpy.run_path(str(BACKEND_DIR / "scripts" / "seed_demo.py"))
     await seed["main"]()
     lib = get_caselib()
-    for cid in ("TC-DISP-001", "TC-HVAC-001"):
+    for cid in ("TC-DISP-001", "TC-HVAC-001", "TC-HVAC-002"):
         c = lib.get_case(cid)
         assert c and c.plan_status == "ready" and c.review_status == "通过"
-    assert rigplan.caseset("B9") == ["TC-DISP-001", "TC-HVAC-001"]
+    assert rigplan.caseset("B9") == ["TC-DISP-001", "TC-HVAC-001", "TC-HVAC-002"]
     await seed["main"]()  # 再跑一次不重复
     st = get_store()  # 测试库是共享的：清掉，免得影响按模块拉取用例的测试
     for t in ("test_case", "case_rev"):
-        st.x(f"DELETE FROM {t} WHERE case_id IN ('TC-DISP-001','TC-HVAC-001')")
+        st.x(f"DELETE FROM {t} WHERE case_id IN ('TC-DISP-001','TC-HVAC-001','TC-HVAC-002')")
     st.x("DELETE FROM rig_caseset WHERE rig_id='B9'")

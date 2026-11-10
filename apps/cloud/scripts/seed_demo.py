@@ -1,4 +1,4 @@
-"""公开演示的种子数据：两条可直接运行的用例（系统设置调光、语音打开空调）。
+"""公开演示的种子数据：三条可直接运行的用例（系统设置调光、语音打开空调、语音调到 24 度）。
 
 演示容器启动时运行一次（deploy/demo-start.sh），已有就跳过。语音用例的测试音频用模型密钥合成；
 没有密钥时仍写入用例，运行时会提示合成失败。
@@ -29,6 +29,13 @@ HVAC = TestCase(
     expect_screen="空调开关显示为开", expect_tts="空调已打开", type="正向", priority="P0",
     review_status="通过", auto_status="已验证", plan_status="ready")
 
+HVAC24 = TestCase(
+    case_id="TC-HVAC-002", title="语音把空调调到 24 度", module="语音助手/空调", channel=["audio", "adb"],
+    precondition="空调已开启，当前 22℃", steps=["说唤醒词“你好千禾”", "说“空调调到 24 度”"], utterance="空调调到 24 度",
+    expected="说“空调调到 24 度”后温度设为 24℃：屏幕显示 24℃，播报“已为您调到 24 度”",
+    expect_screen="空调温度显示 24℃", expect_tts="已为您调到 24 度", type="正向", priority="P0",
+    review_status="通过", auto_status="已验证", plan_status="ready")
+
 BRIGHT_PLAN = {
     "schema": planner.SCHEMA, "case_id": BRIGHT.case_id, "title": BRIGHT.title, "requires": ["adb"], "timeout_s": 120,
     "setup": [{"action": "shell", "cmd": "settings put system screen_brightness 102", "note": BRIGHT.precondition},
@@ -55,7 +62,7 @@ BRIGHT_PLAN = {
 
 async def main() -> None:
     lib = get_caselib()
-    for c in (BRIGHT, HVAC):
+    for c in (BRIGHT, HVAC, HVAC24):
         if lib.get_case(c.case_id):
             print(f"{c.case_id} 已存在，跳过")
             continue
@@ -73,9 +80,10 @@ async def main() -> None:
         await planner.save_plan(c, plan)
         print(f"{c.case_id} 已写入")
     # 演示台架的用例集：页面上“立即运行本台架用例”直接跑这两条（不经过对话，省模型调用）
-    rig = os.getenv("CABIN_RIG_ID", "B1")
-    if not get_store().rig_caseset(rig):
-        get_store().save_rig_caseset(rig, [BRIGHT.case_id, HVAC.case_id], "demo-seed")
+    rigs = os.getenv("CABIN_DEMO_RIGS") or os.getenv("CABIN_RIG_ID", "B1")  # 多台架演示：B1,B2,B3
+    for rig in [r.strip() for r in rigs.split(",") if r.strip()]:
+        if not get_store().rig_caseset(rig):
+            get_store().save_rig_caseset(rig, [BRIGHT.case_id, HVAC.case_id, HVAC24.case_id], "demo-seed")
 
 
 if __name__ == "__main__":

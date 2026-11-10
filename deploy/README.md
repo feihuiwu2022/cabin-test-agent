@@ -74,3 +74,13 @@ node apps/agent/web/demo-tools/record.cjs /tmp/rec
 ```bash
 python3 apps/agent/web/demo-tools/pack.py /tmp/rec/rec.json docs/demo
 ```
+
+另外两个静态演示（`docs/demo-cases/` 用例生成、`docs/demo-board/` 多台架看板）用云端页面，录制和打包见 `apps/cloud/web/demo-tools/pack.py` 开头的说明；构建：
+
+```bash
+cd apps/cloud/web && VITE_DEMO=1 VITE_DEMO_PAGE=cases npx vite build --base ./ --outDir ../../../docs/demo-cases --emptyOutDir
+```
+
+```bash
+cd apps/cloud/web && VITE_DEMO=1 VITE_DEMO_PAGE=board npx vite build --base ./ --outDir ../../../docs/demo-board --emptyOutDir
+```
