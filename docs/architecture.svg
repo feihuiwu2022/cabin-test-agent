@@ -1,0 +1,110 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1080" height="600" viewBox="0 0 1080 600" role="img" aria-labelledby="t d">
+<title id="t">CabinPilot 架构</title>
+<desc id="d">浏览器连接台架本地页面和云端；云端包含用例生产线、判定与缺陷、对话网关、执行调度，经模型网关调用大模型；台架 Agent 领取任务并在车机上执行。</desc>
+<style>
+  :root { --bg:#F3F2FB; --panel:#FFFFFF; --group:#ECEAFB; --line:#C9C5EC; --ink:#1A1840; --sub:#55537A; --accent:#5B4BE6; --ext:#E6F4FA; --extline:#9CCFE3; }
+  @media (prefers-color-scheme: dark) {
+    :root { --bg:#0F1020; --panel:#1D1F38; --group:#16172B; --line:#3A3D66; --ink:#ECECF7; --sub:#A3A6C8; --accent:#8B7DF8; --ext:#132733; --extline:#2F6378; }
+  }
+  text { font-family: "Noto Sans SC","PingFang SC","Microsoft YaHei",system-ui,sans-serif; fill: var(--ink); }
+  .bg { fill: var(--bg); }
+  .grp { fill: var(--group); stroke: var(--line); stroke-width: 1.5; stroke-dasharray: 6 5; }
+  .glbl { font-size: 15px; font-weight: 700; fill: var(--accent); }
+  .box { fill: var(--panel); stroke: var(--line); stroke-width: 1.5; }
+  .ext { fill: var(--ext); stroke: var(--extline); stroke-width: 1.5; }
+  .key { fill: var(--panel); stroke: var(--accent); stroke-width: 2; }
+  .h { font-size: 16px; font-weight: 700; }
+  .s { font-size: 12.5px; fill: var(--sub); }
+  .arr { stroke: var(--accent); stroke-width: 2; fill: none; marker-end: url(#a); }
+  .arr2 { stroke: var(--accent); stroke-width: 2; fill: none; marker-end: url(#a); marker-start: url(#b); }
+  .al { font-size: 12px; fill: var(--accent); font-weight: 600; }
+  .alb { fill: var(--bg); }
+</style>
+<defs>
+  <marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" fill="#7C6CF6"/></marker>
+  <marker id="b" viewBox="0 0 10 10" refX="1" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M10 0L0 5L10 10z" fill="#7C6CF6"/></marker>
+</defs>
+<rect class="bg" width="1080" height="600" rx="16"/>
+
+<!-- 用户 -->
+<rect class="key" x="20" y="200" width="150" height="130" rx="14"/>
+<text class="h" x="95" y="250" text-anchor="middle">浏览器</text>
+<text class="s" x="95" y="274" text-anchor="middle">访客 / 测试工程师</text>
+<text class="s" x="95" y="294" text-anchor="middle">打字或按住说话</text>
+
+<!-- 云端 -->
+<rect class="grp" x="250" y="30" width="470" height="310" rx="16"/>
+<text class="glbl" x="270" y="58">云端 · FastAPI</text>
+<rect class="box" x="270" y="72" width="205" height="110" rx="12"/>
+<text class="h" x="290" y="104">用例生产线</text>
+<text class="s" x="290" y="130">PRD → 需求 → 用例 → 审核</text>
+<text class="s" x="290" y="150">规范包 · 测试代码生成</text>
+<rect class="box" x="495" y="72" width="205" height="110" rx="12"/>
+<text class="h" x="515" y="104">判定与缺陷</text>
+<text class="s" x="515" y="130">视觉 / 语音 / 规则判定</text>
+<text class="s" x="515" y="150">查重 · 人工审核 · 建单</text>
+<rect class="box" x="270" y="205" width="205" height="110" rx="12"/>
+<text class="h" x="290" y="237">对话网关</text>
+<text class="s" x="290" y="263">下达测试 · 只答测试相关</text>
+<text class="s" x="290" y="283">模型工具调用 · 确认门</text>
+<rect class="box" x="495" y="205" width="205" height="110" rx="12"/>
+<text class="h" x="515" y="237">执行调度</text>
+<text class="s" x="515" y="263">任务池 · 台架派发</text>
+<text class="s" x="515" y="283">证据 · 报告 · 定时回归</text>
+
+<!-- 模型 -->
+<rect class="box" x="790" y="72" width="270" height="110" rx="12"/>
+<text class="h" x="810" y="104">模型网关</text>
+<text class="s" x="810" y="130">审计 · 数据分级</text>
+<text class="s" x="810" y="150">演示版每日调用上限</text>
+<rect class="ext" x="790" y="215" width="270" height="125" rx="12"/>
+<text class="h" x="810" y="247">大模型 / 视觉模型</text>
+<text class="s" x="810" y="273">语音合成 · 联网搜索</text>
+<text class="s" x="810" y="293">Anthropic 兼容接口</text>
+<text class="s" x="810" y="313">（默认 MiniMax，可替换）</text>
+
+<!-- 台架 -->
+<rect class="grp" x="250" y="400" width="470" height="180" rx="16"/>
+<text class="glbl" x="270" y="428">台架 PC</text>
+<rect class="box" x="270" y="445" width="205" height="115" rx="12"/>
+<text class="h" x="290" y="477">本地页面</text>
+<text class="s" x="290" y="503">演示主页 · 车机投屏</text>
+<text class="s" x="290" y="523">执行轨迹 · 下发测试</text>
+<rect class="box" x="495" y="445" width="205" height="115" rx="12"/>
+<text class="h" x="515" y="477">台架 Agent</text>
+<text class="s" x="515" y="503">领取任务 · 回放测试代码</text>
+<text class="s" x="515" y="523">采集证据 · 离线补传</text>
+
+<!-- 车机 -->
+<rect class="key" x="790" y="445" width="270" height="115" rx="12"/>
+<text class="h" x="810" y="477">车机</text>
+<text class="s" x="810" y="503">真机：ADB 触屏、喇叭 / 麦克风</text>
+<text class="s" x="810" y="523">无真机：SimCar 模拟车机</text>
+
+<!-- 连线 -->
+<path class="arr" d="M170 300 C 215 300, 215 500, 266 500"/>
+<rect class="alb" x="150" y="392" width="100" height="20" rx="4"/>
+<text class="al" x="200" y="406" text-anchor="middle">页面 + 实时连接</text>
+
+<path class="arr" d="M170 235 L 246 235"/>
+<text class="al" x="208" y="225" text-anchor="middle">用例工作台</text>
+
+<path class="arr2" d="M372 441 L 372 319"/>
+<rect class="alb" x="300" y="360" width="144" height="20" rx="4"/>
+<text class="al" x="372" y="374" text-anchor="middle">对话代理（WebSocket）</text>
+
+<path class="arr" d="M597 441 L 597 319"/>
+<rect class="alb" x="527" y="346" width="140" height="40" rx="4"/>
+<text class="al" x="597" y="361" text-anchor="middle">领取任务 / 上报结果</text>
+<text class="s" x="597" y="379" text-anchor="middle">台架主动发起</text>
+
+<path class="arr" d="M720 127 L 786 127"/>
+<text class="al" x="753" y="117" text-anchor="middle">调用</text>
+
+<path class="arr" d="M925 182 L 925 211"/>
+
+<path class="arr2" d="M704 502 L 786 502"/>
+<text class="al" x="745" y="492" text-anchor="middle">执行</text>
+
+
+</svg>

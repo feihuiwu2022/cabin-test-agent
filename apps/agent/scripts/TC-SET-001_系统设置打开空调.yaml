@@ -1,0 +1,27 @@
+# 示例：系统设置打开空调（SimCar 模拟车机）。双线判定：界面开关为开 + 车辆属性 HVAC_POWER_ON 为 true。
+# 运行（apps/agent/ 下）：uv run python scripts/touch_run.py scripts/TC-SET-001_系统设置打开空调.yaml --simcar [--bugs hvac_ui_only]
+schema: cabin/taskplan/v1
+case_id: TC-SET-001
+title: 系统设置打开空调
+requires: [adb]
+timeout_s: 60
+setup:
+  - {action: shell, cmd: cabin-hvac off}
+steps:
+  - {id: 1, action: launch_app, package: com.cabin.sim.settings}
+  - id: 2
+    action: tap
+    target: {selector: {key: nav-空调, text: 空调}, ocr: 空调, region: [0, 0.08, 0.22, 1]}
+  - id: 3
+    action: tap
+    target: {selector: {key: hvac_power-开关}, ocr: 空调, region: [0.22, 0.08, 1, 1]}
+  - {id: 4, action: wait, until: {selector: {key: hvac_power-开关}, checked: true}, timeout_s: 3}
+  - {id: 5, action: screenshot, domain: center}
+  - {id: 6, action: read_prop, prop: HVAC_POWER_ON}
+assertions:
+  - {id: a1, after_step: 5, type: ui_state, target: {selector: {key: hvac_power-开关}}, checked: true}
+  - {id: a2, after_step: 6, type: vehicle_prop, prop: HVAC_POWER_ON, expect: true}
+  - {id: a3, type: rule, rule: no_crash}
+teardown:
+  - {action: close_app, package: com.cabin.sim.settings}
+on_fail: continue

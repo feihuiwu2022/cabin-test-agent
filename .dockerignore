@@ -1,0 +1,10 @@
+.git
+.venv
+**/node_modules
+**/dist
+**/__pycache__
+.env
+apps/cloud/models
+apps/cloud/data/*.sqlite3*
+apps/cloud/data/evidence
+apps/cloud/data/plans

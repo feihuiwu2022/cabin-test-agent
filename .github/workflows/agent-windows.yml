@@ -1,0 +1,85 @@
+# 台架 Agent Windows 打包（台架端 PRD PF-CFG-05）。打 agent-v* 标签、手动触发，或改动台架 Agent 的 PR 时运行。
+# 产出两个 zip：full（含 OCR / 图标模板定位）、lite（不含，体积小）。构建后在 Windows 上跑一次 --selfcheck，
+# 其中会实际用 DPAPI 加密、解密一次令牌。标签触发时附到 GitHub Release。
+name: agent-windows
+
+on:
+  push:
+    tags: ["agent-v*"]
+  pull_request:  # 改动台架 Agent 的 PR 先在 Windows 上打一次包、自检，不发布
+    paths:
+      - "apps/agent/**"
+      - "packages/common/**"
+      - "uv.lock"
+      - ".github/workflows/agent-windows.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: windows-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        flavor: [full, lite]
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: astral-sh/setup-uv@v6
+        with:
+          python-version: "3.12"
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: 版本号与标签一致
+        if: startsWith(github.ref, 'refs/tags/agent-v')
+        shell: bash
+        run: |
+          want="${GITHUB_REF_NAME#agent-v}"
+          have=$(grep -oP 'AGENT_VERSION = "\K[^"]+' apps/agent/cabin_agent/daemon.py)
+          [ "$want" = "$have" ] || { echo "标签 $want 与 AGENT_VERSION $have 不一致"; exit 1; }
+
+      - name: 构建本地页面
+        working-directory: apps/agent/web
+        run: |
+          npm ci
+          npm run build
+
+      - name: 安装依赖
+        run: uv sync --frozen --package cabin-agent ${{ matrix.flavor == 'full' && '--extra vision' || '' }}
+
+      - name: 打包
+        working-directory: apps/agent
+        run: uv run --no-sync --with pyinstaller==6.22.3 pyinstaller packaging/cabin-agent.spec --noconfirm
+
+      - name: 自检（含 DPAPI）
+        working-directory: apps/agent
+        shell: bash
+        run: |
+          ./dist/cabin-agent/cabin-agent.exe --version
+          ./dist/cabin-agent/cabin-agent.exe --selfcheck | tee selfcheck.json
+          grep -q '"token_protection": "dpapi"' selfcheck.json
+
+      - name: 压缩
+        working-directory: apps/agent
+        shell: pwsh
+        run: |
+          $ver = (Select-String -Path cabin_agent/daemon.py -Pattern 'AGENT_VERSION = "([^"]+)"').Matches[0].Groups[1].Value
+          Copy-Item packaging/安装说明.txt dist/cabin-agent/
+          Compress-Archive -Path dist/cabin-agent -DestinationPath "cabin-agent-$ver-win64-${{ matrix.flavor }}.zip"
+          "ZIP=cabin-agent-$ver-win64-${{ matrix.flavor }}.zip" >> $env:GITHUB_ENV
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: cabin-agent-win64-${{ matrix.flavor }}
+          path: apps/agent/${{ env.ZIP }}
+
+      - name: 附到 Release
+        if: startsWith(github.ref, 'refs/tags/agent-v')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: apps/agent/${{ env.ZIP }}

@@ -1,0 +1,221 @@
+<!doctype html>
+<html lang="zh-CN"><head><meta charset="utf-8"><title>SimCar 模拟车机</title>
+<style>
+/* 模拟安卓域车机（1280x560，16:7）。内置两个已知缺陷：显示页说明文案截断（bug=trunc）、声音页"音效"崩溃（bug=crash）。
+   语音可注入缺陷（默认不开）：tts_wrong 播报数值错、no_exec 温度未生效、no_tts 无播报、slow 播报慢、no_wake 唤醒无响应
+   触屏可注入缺陷：hvac_ui_only 设置里空调开关只变界面、车辆属性不变；hvac_reflow 空调页布局改版（控件 id 变了） */
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;background:#0A0E12;color:#DDE6EC;font-family:"PingFang SC","Noto Sans SC","Microsoft YaHei",sans-serif;overflow:hidden}
+#root{width:1280px;height:560px;position:relative}
+.sb{display:flex;justify-content:space-between;padding:10px 26px;font-size:20px;color:#9FB0BB;height:46px}
+.home{display:grid;grid-template-columns:repeat(6,1fr);gap:30px;padding:56px 70px}
+.app{display:flex;flex-direction:column;align-items:center;gap:12px;font-size:22px;cursor:pointer;padding:8px;border-radius:16px}
+.app i{width:104px;height:104px;border-radius:28px;display:block}
+.set{display:grid;grid-template-columns:280px 1fr;height:514px}
+.set nav{background:#11171C;padding:16px 0}
+.set nav div{padding:16px 28px;font-size:24px;color:#9FB0BB;cursor:pointer}
+.set nav div.on{background:#1E2A33;color:#fff;border-left:6px solid #3FB6C0}
+.pane{padding:22px 38px;display:flex;flex-direction:column;gap:16px;min-width:0}
+.row{display:flex;align-items:center;justify-content:space-between;gap:24px;background:#121A20;border-radius:14px;padding:16px 26px;font-size:24px;min-width:0;cursor:pointer}
+.row .desc{display:block;font-size:18px;color:#8C9DA8;margin-top:4px}
+.lbl{min-width:0}
+.trunc{display:block;width:180px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tg{width:76px;height:40px;border-radius:24px;background:#3FB6C0;position:relative;flex:none}
+.tg::after{content:"";position:absolute;right:5px;top:5px;width:30px;height:30px;border-radius:50%;background:#fff}
+.tg.off{background:#3A4750}.tg.off::after{right:auto;left:5px}
+.sl{width:300px;height:10px;border-radius:5px;background:#2A363E;position:relative;flex:none}
+.sl i{position:absolute;left:0;top:0;bottom:0;background:#3FB6C0;border-radius:5px}
+.title{font-size:30px;padding:30px 40px}
+.back{position:absolute;left:20px;bottom:20px;font-size:20px;color:#9FB0BB;border:1px solid #2A363E;border-radius:10px;padding:8px 18px;cursor:pointer}
+.toast{position:absolute;left:50%;top:40%;transform:translateX(-50%);background:#2A1A1E;border:1px solid #E5484D;color:#fff;padding:20px 30px;border-radius:12px;font-size:22px}
+.hv{padding:24px 60px;display:grid;grid-template-columns:1fr 1fr;gap:30px;align-items:center;height:400px}
+.hv .tmp{font-size:120px;font-weight:300}
+.hv .ctl{font-size:28px;display:flex;flex-direction:column;gap:16px}
+.vbar{position:absolute;left:50%;top:56px;transform:translateX(-50%);background:#1E2A33;padding:8px 22px;border-radius:999px;font-size:20px}
+.subt{position:absolute;left:50%;bottom:40px;transform:translateX(-50%);color:#5FE0EA;font-size:22px;white-space:nowrap}
+.wm{position:absolute;right:16px;bottom:10px;font-size:15px;color:#4F5D66}
+</style></head>
+<body><div id="root"></div>
+<script>
+(() => {
+const Q = new URLSearchParams(location.search);
+const BUGS = (Q.get("bugs") ?? "trunc,crash").split(",").filter(Boolean);
+const OTA = Q.get("ota") || "C01-OTA-1.0.0";
+const APPS = [["导航","#2F7DE1","com.cabin.sim.nav"],["音乐","#C2417A","com.cabin.sim.music"],["电话","#2EA764","com.cabin.sim.phone"],["设置","#5B6B77","com.cabin.sim.settings"],["车辆","#D7832B","com.cabin.sim.vehicle"],["空调","#2BA8B5","com.cabin.sim.hvac"]];
+const S = { screen: "home", nav: "通用", stack: [], toggles: { 自动调节亮度: true, 夜间模式: false, 按键音: true, 蓝牙: true, WLAN: false }, toast: "", bright: 70, vol: 45, hvac: { on: false, temp: 22, ui: null }, heard: "", subtitle: "" };
+const LOG = [];
+let pid = 2300;
+const pad = (n, w = 2) => String(n).padStart(w, "0");
+function ts() { const d = new Date(); return `${pad(d.getMonth()+1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}.${pad(d.getMilliseconds(),3)}`; }
+function log(level, tag, msg, p = pid) { for (const line of msg.split("\n")) LOG.push(`${ts()}  ${p}  ${p} ${level} ${tag}: ${line}`); }
+const pkgOf = () => S.screen === "home" ? "com.cabin.sim.launcher" : (APPS.find(a => a[0] === S.screen) || [0,0,"com.cabin.sim.settings"])[2];
+function startActivity(pkg, act) { pid++; log("I", "ActivityManager", `Start proc ${pid}:${pkg}/u0a88 for activity ${pkg}/${act}`, 1000); log("I", "ActivityManager", `Displayed ${pkg}/${act}: +${180 + (pid % 7) * 23}ms`, 1000); }
+
+function go(screen) { S.stack.push(screen === S.screen ? null : { screen: S.screen, nav: S.nav }); S.screen = screen; render(); }
+function crash() {
+  const p = pid;
+  log("E", "AndroidRuntime", "FATAL EXCEPTION: main", p);
+  log("E", "AndroidRuntime", `Process: com.cabin.sim.settings, PID: ${p}`, p);
+  log("E", "AndroidRuntime", "java.lang.NullPointerException: Attempt to invoke virtual method 'short android.media.audiofx.Equalizer.getNumberOfBands()' on a null object reference", p);
+  log("E", "AndroidRuntime", "\tat com.cabin.sim.settings.sound.SoundEffectFragment.bindBands(SoundEffectFragment.java:88)", p);
+  log("E", "AndroidRuntime", "\tat com.cabin.sim.settings.sound.SoundEffectFragment.onViewCreated(SoundEffectFragment.java:41)", p);
+  log("E", "AndroidRuntime", "\tat androidx.fragment.app.Fragment.performViewCreated(Fragment.java:3089)", p);
+  log("I", "ActivityManager", `Process com.cabin.sim.settings (pid ${p}) has died: fg  TOP`, 1000);
+  S.screen = "home"; S.stack = []; S.toast = "“设置”已停止运行"; render();
+  setTimeout(() => { S.toast = ""; render(); }, 2500);
+}
+
+const row = (k, lbl, right, desc = "", descCls = "") =>
+  `<div class="row" data-k="${k}" data-click="1"><span class="lbl">${lbl}${desc ? `<span class="desc ${descCls}" data-k="${k}-说明">${desc}</span>` : ""}</span>${right}</div>`;
+const tg = name => `<span class="tg ${S.toggles[name] ? "" : "off"}" data-k="${name}-开关"></span>`;
+function pane() {
+  switch (S.nav) {
+    case "显示": return row("屏幕亮度", "屏幕亮度", `<span class="sl" data-k="亮度滑块"><i style="width:${S.bright}%"></i></span>`) +
+      row("自动调节亮度", "自动调节亮度", tg("自动调节亮度"), "根据环境光自动调节屏幕亮度", BUGS.includes("trunc") ? "trunc" : "") +
+      row("夜间模式", "夜间模式", tg("夜间模式")) + row("屏幕保护", "屏幕保护", "<span>5 分钟</span>");
+    case "声音": return row("媒体音量", "媒体音量", `<span class="sl"><i style="width:${S.vol}%"></i></span>`) +
+      row("音效", "音效", "<span>标准 ›</span>", "均衡器与环绕声") + row("按键音", "按键音", tg("按键音"));
+    case "连接": return row("蓝牙", "蓝牙", tg("蓝牙")) + row("WLAN", "WLAN", tg("WLAN")) + row("热点", "个人热点", "<span>关闭 ›</span>");
+    case "空调": {
+      const k = BUGS.includes("hvac_reflow") ? "hvac_switch_v2" : "hvac_power";
+      const on = S.hvac.ui ?? S.hvac.on;
+      return row(k, "空调", `<span class="tg ${on ? "" : "off"}" data-k="${k}-开关"></span>`, "打开后按设定温度运行") +
+        row("hvac_temp", "设定温度", `<span>${S.hvac.temp}℃</span>`) + row("hvac_auto", "自动空调", "<span>开启</span>");
+    }
+    case "系统": return row("系统版本", "系统版本", `<span>${OTA}</span>`) + row("存储", "存储空间", "<span>已用 21.4 GB / 64 GB</span>") + row("恢复出厂", "恢复出厂设置", "<span>›</span>");
+    default: return row("语言", "语言", "<span>简体中文</span>") + row("时间", "时间与日期", "<span>自动</span>") + row("单位", "单位", "<span>公制</span>");
+  }
+}
+function clock() { const d = new Date(); return `${pad(d.getHours())}:${pad(d.getMinutes())}`; }
+function render() {
+  const r = document.getElementById("root");
+  let h;
+  if (S.screen === "home") {
+    h = `<div class="sb"><span>${clock()}</span><span>22°C · 4G · 续航 520km</span></div><div class="home">${APPS.map(([n, c]) => `<div class="app" data-k="${n}" data-click="1"><i style="background:${c}"></i>${n}</div>`).join("")}</div>`;
+  } else if (S.screen === "设置") {
+    const nav = ["通用", "显示", "声音", "空调", "连接", "系统"].map(n => `<div data-k="nav-${n}" data-click="1" class="${n === S.nav ? "on" : ""}">${n}</div>`).join("");
+    h = `<div class="sb"><span>设置 · ${S.nav}</span><span>${clock()} · 22°C</span></div><div class="set"><nav>${nav}</nav><div class="pane">${pane()}</div></div>`;
+  } else if (S.screen === "空调") {
+    h = `<div class="sb"><span>空调</span><span>${clock()} · 车外 18°C</span></div><div class="hv"><div class="tmp" data-k="空调温度">${S.hvac.temp}℃</div>` +
+      `<div class="ctl"><div data-k="空调开关状态">空调开关：${S.hvac.on ? "开" : "关"}</div><div>模式：自动</div></div></div>` +
+      (S.heard ? `<div class="vbar" data-k="语音条">🎙 ${S.heard}</div>` : "") + (S.subtitle ? `<div class="subt" data-k="播报字幕">🔊 ${S.subtitle}</div>` : "");
+  } else {
+    h = `<div class="sb"><span>${S.screen}</span><span>${clock()} · 22°C</span></div><div class="title">${S.screen}（演示占位页）</div><div class="back" data-k="返回" data-click="1">‹ 返回</div>`;
+  }
+  if (S.toast) h += `<div class="toast" data-k="toast">${S.toast}</div>`;
+  r.innerHTML = h + `<span class="wm">SimCar 模拟车机 · ${OTA}</span>`;
+}
+
+function onClick(k) {
+  if (!k) return;
+  const app = APPS.find(a => a[0] === k);
+  if (S.screen === "home" && app) { startActivity(app[2], app[0] === "设置" ? ".SettingsActivity" : ".MainActivity"); return go(k); }
+  if (k === "返回") return key("back");
+  if (k.startsWith("nav-")) { S.nav = k.slice(4); log("I", "SettingsActivity", `switch pane -> ${S.nav}`); return render(); }
+  if (k.endsWith("-开关")) k = k.slice(0, -3);
+  if (k.endsWith("-说明")) k = k.slice(0, -3);
+  if (k === "hvac_power" || k === "hvac_switch_v2") {
+    if (BUGS.includes("hvac_ui_only")) S.hvac.ui = !(S.hvac.ui ?? S.hvac.on);  // 缺陷：只变界面，车辆没执行
+    else { S.hvac.on = !S.hvac.on; S.hvac.ui = null; }
+    log("I", "CarHvacManager", `set HVAC_POWER_ON=${S.hvac.ui ?? S.hvac.on}`); return render();
+  }
+  if (k in S.toggles) { S.toggles[k] = !S.toggles[k]; log("I", "SettingsProvider", `put ${k}=${S.toggles[k]}`); return render(); }
+  if (k === "音效" && BUGS.includes("crash")) return crash();
+  if (k === "恢复出厂") { S.toast = "演示车机已禁用该操作"; render(); setTimeout(() => { S.toast = ""; render(); }, 1500); }
+}
+// 车机语音助手（模拟）：规则与示例 PRD §4.1 一致；语音缺陷经 ?bugs= 注入
+function voiceSay(text) {
+  S.heard = text;
+  if (S.screen !== "空调") { startActivity("com.cabin.sim.hvac", ".MainActivity"); S.screen = "空调"; }
+  let tts = "抱歉，我没听懂", m;
+  if (/打开空调/.test(text)) { S.hvac.on = true; tts = "空调已打开"; }
+  else if (/关闭空调/.test(text)) { tts = S.hvac.on ? "空调已关闭" : "空调已经是关闭状态"; S.hvac.on = false; }
+  else if ((m = text.match(/空调调到\s*(\d+)\s*度/))) {
+    const n = +m[1];
+    if (n < 16 || n > 32) tts = "温度可调范围为 16 到 32 度";
+    else {
+      if (!BUGS.includes("no_exec")) S.hvac.temp = n;
+      tts = `已为您调到 ${BUGS.includes("tts_wrong") ? n + 2 : n} 度`;
+    }
+  }
+  if (BUGS.includes("no_tts")) tts = "";
+  log("I", "VoiceAssistant", `asr="${text}" tts="${tts}"`);
+  S.subtitle = tts;
+  render();
+  return { tts, delay_ms: BUGS.includes("slow") ? 2200 : 900 };
+}
+function key(name) {
+  if (name === "home") { S.screen = "home"; S.stack = []; }
+  else if (name === "back") {
+    if (S.screen === "home") return;
+    let prev = S.stack.pop(); while (S.stack.length && !prev) prev = S.stack.pop();
+    if (prev) { S.screen = prev.screen; S.nav = prev.nav; } else S.screen = "home";
+  }
+  render();
+}
+
+// 亮度滑块：按下后拖动，松开时按位置定亮度（等价于 SeekBar）
+let dragSl = null;
+document.addEventListener("mousedown", e => { dragSl = e.target.closest(".sl"); });
+document.addEventListener("mouseup", e => {
+  if (!dragSl) return;
+  const b = dragSl.getBoundingClientRect(); dragSl = null;
+  S.bright = Math.round(Math.max(0, Math.min(1, (e.clientX - b.left) / b.width)) * 100);
+  S.toggles["自动调节亮度"] = false;
+  log("I", "SettingsProvider", `put screen_brightness=${Math.round(S.bright * 2.55)}`); render();
+});
+
+document.addEventListener("click", e => {
+  if (e.target.closest(".sl")) return;
+  const el = e.target.closest("[data-click]") || e.target.closest("[data-k]");
+  onClick(el && el.dataset.k);
+});
+
+// 设备侧接口：供适配器调用（等价于 uiautomator dump / logcat / getprop / input keyevent）
+window.__simcar = {
+  dumpUI() {
+    const out = [];
+    document.querySelectorAll("[data-k]").forEach(el => {
+      const b = el.getBoundingClientRect();
+      if (b.width < 2 || b.height < 2) return;
+      const txt = el.matches(".row") ? el.querySelector(".lbl").childNodes[0].textContent.trim() : el.innerText.trim().split("\n")[0];
+      const desc = el.querySelector(".desc");
+      out.push({ key: el.dataset.k, text: el.dataset.k.endsWith("开关") ? "" : txt, desc: desc ? desc.textContent : "",
+        clickable: !!el.dataset.click || el.classList.contains("tg"), checked: el.classList.contains("tg") ? !el.classList.contains("off") : null,
+        cls: el.className || el.tagName.toLowerCase(), bounds: [Math.round(b.left), Math.round(b.top), Math.round(b.right), Math.round(b.bottom)],
+        truncated: desc ? desc.scrollWidth > desc.clientWidth + 1 : false });
+    });
+    return out;
+  },
+  screen() { return S.screen === "设置" ? `设置/${S.nav}` : S.screen; },
+  package: pkgOf,
+  logs(since = 0) { return { lines: LOG.slice(since), next: LOG.length }; },
+  getprop(name) { return ({ "ro.build.display.id": OTA, "ro.product.model": "C01-HU", "ro.build.type": "userdebug" })[name] || ""; },
+  key, bugs: BUGS,
+  packages: () => ["com.cabin.sim.launcher", ...APPS.map(a => a[2])],
+  reset() { S.screen = "home"; S.nav = "通用"; S.stack = []; S.toast = ""; S.heard = S.subtitle = ""; render(); },
+  voiceWake() { return BUGS.includes("no_wake") ? { ok: false, reply: "" } : { ok: true, reply: "我在" }; },
+  voiceSay,
+  brightness(v) { if (v != null) { S.bright = Math.round(v / 2.55); render(); } return Math.round(S.bright * 2.55); },
+  hvacSet(on, temp) { S.hvac.on = on; S.hvac.ui = null; if (temp != null) S.hvac.temp = temp; S.heard = S.subtitle = ""; render(); },
+  // 等价于 am start / monkey -p / am force-stop
+  launch(pkg) {
+    const app = APPS.find(a => a[2] === pkg);
+    if (!app) return `Error: Activity not started, unable to resolve Intent { pkg=${pkg} }`;
+    startActivity(pkg, app[0] === "设置" ? ".SettingsActivity" : ".MainActivity");
+    S.stack = []; S.screen = app[0]; if (app[0] === "设置") S.nav = "通用"; S.toast = ""; render();
+    return "Events injected: 1";
+  },
+  forceStop(pkg) { if (pkgOf() === pkg) { S.screen = "home"; S.stack = []; render(); } return ""; },
+  // 等价于 cmd car_service get-property-value <id>（Android Automotive VHAL；左右两个座位区域）
+  prop(id) {
+    const v = { 0x15200510: String(S.hvac.on), 0x15600503: S.hvac.temp.toFixed(1), 0x1520050A: "true" }[id];
+    if (v === undefined) return `Property 0x${id.toString(16)} not supported`;
+    return [0x1, 0x4].map(a => `CarPropertyValue{mPropertyId=0x${id.toString(16)}, mAreaId=0x${a.toString(16)}, mStatus=0, mTimestampNanos=${Date.now()}000000, mValue=${v}}`).join("\n");
+  },
+};
+log("I", "SystemServer", `Boot completed ${OTA}`, 1000);
+render();
+setInterval(() => { if (!S.toast) { const sb = document.querySelector(".sb span"); if (sb && S.screen === "home") sb.textContent = clock(); } }, 10000);
+})();
+</script></body></html>

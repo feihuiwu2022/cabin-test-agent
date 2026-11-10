@@ -1,0 +1,26 @@
+[project]
+name = "cabin-workspace"
+version = "0.2.0"
+description = "CabinPilot 座舱智能测试机器人：云端、台架 Agent 与公共包"
+requires-python = ">=3.12"
+dependencies = ["cabin-cloud", "cabin-agent", "cabin-common"]
+
+[dependency-groups]
+dev = ["pytest>=9.2.0", "pytest-asyncio>=1.4.1"]
+
+[tool.uv]
+package = false
+
+[tool.uv.workspace]
+members = ["packages/common", "apps/cloud", "apps/agent"]
+
+[tool.uv.sources]
+cabin-cloud = { workspace = true }
+cabin-agent = { workspace = true }
+cabin-common = { workspace = true }
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["packages/common/tests", "apps/cloud/tests", "apps/agent/tests", "tests/integration"]
+pythonpath = ["tests/integration", "apps/cloud/tests"]
+addopts = "--import-mode=importlib"

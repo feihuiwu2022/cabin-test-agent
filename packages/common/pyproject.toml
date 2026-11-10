@@ -1,0 +1,13 @@
+[project]
+name = "cabin-common"
+version = "0.2.0"
+description = "CabinPilot 云端与台架共用的模型与规范"
+requires-python = ">=3.12"
+dependencies = ["pydantic>=2.14.2", "pyyaml>=6.0.3", "python-dotenv>=1.0.0"]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["cabin_common"]

@@ -1,0 +1,32 @@
+# CabinPilot 模块路由：每个模块一个文件夹，可以有一张自己的飞书多维表格。改完保存即生效，不用重启。
+#
+# code      用例编号里的模块缩写（TC-<code>-001）。已经生成过用例的模块不要改 code
+# name      模块名，界面和通知里显示
+# keywords  从 PRD 的模块路径识别本模块的关键词，从上往下匹配，先匹配到的模块生效
+#           例：“语音助手/空调” 先命中 语音 → VOICE
+# folder    测试代码仓库（data/plans）里的文件夹：
+#             <folder>/prd/    PRD 原文，按版本存档，如 语音助手_空调温度调节_PRD_V0.1.0.docx
+#             <folder>/cases/  YAML 测试代码，如 TC-VOICE-001.yaml
+#           改了 folder 后执行 uv run python scripts/modules.py relocate，把已有文件挪过去
+# bitable   本模块用例的多维表格链接（含 ?table=）。留空就用 .env 的 FEISHU_BITABLE_URL（默认表）
+#           新建一张并写到这里：uv run python scripts/setup_bitable.py --module VOICE
+#
+# members   模块成员（飞书姓名），可以多人。定时任务没有发现人时，待审核归这些人，例：members: [张三, 李四]
+#
+# 没列在这里的模块缩写：文件夹用缩写本身，用例写默认表。
+
+modules:
+  - {code: VOICE, name: 语音助手, keywords: [语音], folder: 语音助手, bitable: ""}
+  - {code: DISP, name: 显示, keywords: [显示], folder: 显示, bitable: ""}
+  - {code: MEDIA, name: 媒体, keywords: [媒体, 音乐], folder: 媒体, bitable: ""}
+  - {code: SND, name: 声音, keywords: [声音, 音效], folder: 声音, bitable: ""}
+  - {code: SYS, name: 系统, keywords: [系统], folder: 系统, bitable: ""}
+  - {code: NAV, name: 导航, keywords: [导航], folder: 导航, bitable: ""}
+  - {code: HVAC, name: 空调, keywords: [空调], folder: 空调, bitable: ""}
+  - {code: VEH, name: 车控, keywords: [车控], folder: 车控, bitable: ""}
+  - {code: BT, name: 蓝牙, keywords: [蓝牙], folder: 蓝牙, bitable: ""}
+  - {code: PHONE, name: 电话, keywords: [电话], folder: 电话, bitable: ""}
+  - {code: CLU, name: 仪表, keywords: [仪表], folder: 仪表, bitable: ""}
+  - {code: SEAT, name: 座椅, keywords: [座椅], folder: 座椅, bitable: ""}
+  - {code: ACCT, name: 账号, keywords: [账号], folder: 账号, bitable: ""}
+  - {code: SET, name: 设置, keywords: [设置], folder: 设置, bitable: ""}

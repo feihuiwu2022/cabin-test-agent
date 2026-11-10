@@ -1,0 +1,27 @@
+CabinPilot 台架 Agent（Windows）
+
+安装
+1. 把整个 cabin-agent 文件夹解压到台架 PC，例如 D:\CabinPilot\cabin-agent（路径里最好不要有空格）。
+2. 双击 cabin-agent.exe。第一次启动会自动打开浏览器里的“首次配置”页：
+   填云端地址、台架编号、车型、注册码（台架管理员在云端台架管理里生成），点“保存并连接云端”。
+3. 保存后 Agent 自动注册并打开本地页面（http://127.0.0.1:8810），用飞书登录后可以看投屏、本机状态。
+
+车机连接
+- 用 USB 连车机并打开 ADB 调试；包里自带 adb，不用另装。只连一台车机时“ADB 序列号”留空。
+
+数据与日志
+- 数据目录：%LOCALAPPDATA%\CabinPilot\agent（配置 agent.json、台架令牌、证据、离线缓存）。
+- 日志：%LOCALAPPDATA%\CabinPilot\agent\logs\agent.log，按天滚动，保留 14 天。
+- 台架令牌用 Windows DPAPI 按当前用户加密，拷到别的电脑或别的账户无法使用。
+
+常用命令（在 cabin-agent 文件夹里打开命令行）
+  cabin-agent.exe --version     查看版本
+  cabin-agent.exe --selfcheck   自检：本地页面、adb、ffmpeg、数据目录、令牌加密
+  cabin-agent.exe --setup       重新打开配置页（改云端地址、台架编号等）
+  cabin-agent.exe --no-browser  启动时不打开浏览器
+
+版本区别
+- full：含 OCR 与图标模板定位（触屏用例的文字 / 图标定位层）。
+- lite：不含这两层，体积小；遇到需要 OCR / 图标定位的步骤会跳过这两层并告警。
+
+升级：暂时手动替换整个文件夹（数据目录不受影响）。自动升级在下一步交付。

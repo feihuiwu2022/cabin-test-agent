@@ -1,0 +1,47 @@
+# 本地用例缓存
+source: "feishu:座舱设置用例库"
+cases:
+  - id: TC-DISP-012
+    title: 自动调节亮度开关与说明文案显示
+    module: 设置/显示/亮度
+    package: com.cabin.sim.settings
+    page: 设置/显示
+    precondition: 车机已启动，处于桌面
+    steps: [进入设置, 点击左侧"显示", 查看"自动调节亮度"一项]
+    expected: 显示"自动调节亮度"开关，开关下方的说明文案完整显示为"根据环境光自动调节屏幕亮度"，不得截断、缺字或出现省略号
+    priority: P1
+    type: 功能
+    keywords: [显示, 亮度, 自动亮度, 显示设置, 亮度页]
+  - id: TC-DISP-015
+    title: 夜间模式开关可切换
+    module: 设置/显示
+    package: com.cabin.sim.settings
+    page: 设置/显示
+    precondition: 车机已启动，处于桌面
+    steps: [进入设置, 点击"显示", 点击"夜间模式"开关]
+    expected: 夜间模式开关可正常切换开/关状态，页面无报错、无闪退
+    priority: P2
+    type: 功能
+    keywords: [夜间模式, 显示]
+  - id: TC-SND-007
+    title: 音效设置页可正常打开
+    module: 设置/声音/音效
+    package: com.cabin.sim.settings
+    page: 设置/声音
+    precondition: 车机已启动，处于桌面
+    steps: [进入设置, 点击"声音", 点击"音效"]
+    expected: 进入音效设置页，显示均衡器与环绕声选项，应用不闪退
+    priority: P1
+    type: 功能
+    keywords: [声音, 音效, 均衡器]
+  - id: TC-SYS-003
+    title: 系统版本号显示
+    module: 设置/系统
+    package: com.cabin.sim.settings
+    page: 设置/系统
+    precondition: 车机已启动，处于桌面
+    steps: [进入设置, 点击"系统", 查看"系统版本"]
+    expected: 系统版本一项显示当前 OTA 版本号，格式为 C01-OTA-x.y.z
+    priority: P2
+    type: 功能
+    keywords: [系统, 版本, OTA]

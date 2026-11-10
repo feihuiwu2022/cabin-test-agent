@@ -1,0 +1,37 @@
+[project]
+name = "cabin-agent"
+version = "0.2.0"
+description = "CabinPilot 台架 Agent：回放执行、离线补传与本地 Web（每台台架 PC 一份）"
+requires-python = ">=3.12"
+dependencies = [
+    "cabin-common",
+    "adbutils>=2.12.0",
+    "fastapi>=0.162.0",
+    "httpx>=0.28.1",
+    "imageio-ffmpeg>=0.5.1",
+    "pillow>=10.0.0",
+    "playwright>=1.64.1",
+    "python-multipart>=0.0.32",
+    "uvicorn[standard]>=0.54.0",
+    "websockets>=14",
+]
+
+[project.optional-dependencies]
+# 触屏执行的 OCR / 图标模板定位（不装时这两层定位跳过并告警）：uv sync --extra vision
+vision = [
+    "opencv-python-headless>=4.10",
+    "rapidocr-onnxruntime>=1.4",
+]
+
+[project.scripts]
+cabin-agent = "cabin_agent.daemon:run"
+
+[tool.uv.sources]
+cabin-common = { workspace = true }
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["cabin_agent"]

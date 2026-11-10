@@ -1,0 +1,52 @@
+# Secrets / local credentials
+.env
+.env.*
+!.env.example
+*.local
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+.venv-*/
+venv/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+*.egg-info/
+
+# Node
+node_modules/
+dist/
+dist-ssr/
+*.tsbuildinfo
+
+# Models (large binaries, e.g. SenseVoice ASR)
+apps/cloud/models/
+
+# 运行期数据（启动时自动重建，无需入库）
+# SQLite 结果库：表结构由 CREATE TABLE IF NOT EXISTS 创建，Jira 种子写在代码里
+apps/cloud/data/cabin.sqlite3
+apps/cloud/data/cabin.sqlite3-*
+# 执行证据（截图 / logcat）：每次执行重新生成
+apps/cloud/data/evidence/
+# PRD 上传与生成的测试代码仓库（data/plans 自带独立 git）
+apps/cloud/data/uploads/
+apps/cloud/data/plans/
+apps/cloud/data/assets/
+# 台架 Agent 的令牌、离线缓存与证据
+apps/agent/data/
+
+# Logs / caches
+logs/
+*.log
+npm-debug.log*
+.DS_Store
+.vscode/
+.idea/
+
+
+# 台架 Agent 打包产物（PyInstaller）
+apps/agent/build/
+apps/agent/dist/
+*.spec.bak

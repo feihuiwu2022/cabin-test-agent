@@ -1,0 +1,17 @@
+# 前置条件 → 设置命令。用例的前置条件按逗号、分号拆成小句，逐句匹配，从上往下先匹配到的生效。
+#
+# match   小句里包含其中任意一个词就算匹配
+# cmd     要执行的命令，一条或多条；不写表示不用设置（比如"处于桌面"，第一步就回桌面）
+# models  只对这些车型生效，不写表示全部车型。不同车型命令不同时写多条
+#
+# 命令必须符合 cabin_common/taskplan.py 的 SHELL_PATTERNS，否则测试代码校验不通过。
+# 匹配不到的小句不会被设置，结果按"前置条件未满足"降为低置信，要在这里补上。
+
+preconditions:
+  - match: [已解锁, 亮屏, 处于桌面, 车机已启动, 车机已连接, 已连接台架]
+
+  - match: [自动调整亮度已关闭, 自动调节亮度已关闭, 关闭自动亮度]
+    cmd: settings put system screen_brightness_mode 0
+
+  - match: [亮度低于100%, 亮度低于 100%]
+    cmd: settings put system screen_brightness 102

@@ -1,0 +1,115 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>CabinPilot 演示</title>
+<meta name="description" content="CabinPilot：座舱智能测试机器人。一句话下达测试，自动执行车机用例并用视觉模型、规则和车辆属性判定。">
+<style>
+:root{--bg:#F3F2FB;--panel:#FFFFFF;--line:#DCDAF0;--ink:#1A1840;--sub:#55537A;--accent:#5B4BE6;--chip:#ECE9FE}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0F1020;--panel:#16172B;--line:#2C2F52;--ink:#ECECF7;--sub:#A3A6C8;--accent:#7C6CF6;--chip:#2A2453}}
+:root[data-theme="dark"]{--bg:#0F1020;--panel:#16172B;--line:#2C2F52;--ink:#ECECF7;--sub:#A3A6C8;--accent:#7C6CF6;--chip:#2A2453}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.65 "Noto Sans SC","PingFang SC","Microsoft YaHei",system-ui,sans-serif}
+main{max-width:1120px;margin:0 auto;padding:32px 16px 56px}
+h1{font-size:28px;margin:0 0 6px;letter-spacing:.01em}
+.lead{color:var(--sub);margin:0 0 20px;max-width:760px}
+.links{display:flex;flex-wrap:wrap;gap:10px;margin-bottom:28px}
+.links a{color:var(--accent);text-decoration:none;border:1px solid var(--line);background:var(--panel);padding:6px 14px;border-radius:999px}
+.links a:hover{border-color:var(--accent)}
+.links a.go{background:var(--accent);border-color:var(--accent);color:#fff;font-weight:600}
+.sec{font-size:20px;margin:40px 0 12px}
+.diagram{margin:0;background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:8px;overflow-x:auto}
+.diagram img{display:block;width:100%;min-width:640px;height:auto}
+.tabs{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:14px}
+.tabs button{font:inherit;color:var(--ink);background:var(--panel);border:1px solid var(--line);border-radius:999px;padding:7px 16px;cursor:pointer}
+.tabs button[aria-selected="true"]{background:var(--accent);border-color:var(--accent);color:#fff}
+.tabs button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.step{display:grid;grid-template-columns:minmax(0,1fr) 300px;gap:20px;align-items:start}
+.step img{width:100%;border-radius:12px;border:1px solid var(--line);display:block;background:var(--panel)}
+.note{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:16px 18px}
+.note h2{font-size:17px;margin:0 0 8px}
+.note p{margin:0 0 10px;color:var(--sub)}
+.note ul{margin:0;padding-left:18px;color:var(--sub)}
+.nav{display:flex;gap:8px;margin-top:14px}
+.nav button{font:inherit;flex:1;background:var(--chip);color:var(--ink);border:0;border-radius:8px;padding:8px;cursor:pointer}
+.nav button:disabled{opacity:.4;cursor:default}
+.arch{margin-top:14px;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+.arch div{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:14px 16px}
+.arch b{display:block;margin-bottom:4px}
+.arch span{color:var(--sub);font-size:14px}
+footer{margin-top:36px;color:var(--sub);font-size:13px}
+@media (max-width:820px){.step{grid-template-columns:1fr}.arch{grid-template-columns:1fr}h1{font-size:23px}}
+</style>
+</head>
+<body>
+<main>
+  <h1>CabinPilot 座舱智能测试机器人</h1>
+  <p class="lead">用一句话下达座舱测试任务，自动完成“读用例 → 在车机上执行 → 视觉 / 语音判定 → 提缺陷 → 报告”。点“打开交互演示”可以自己操作（回放一次真实运行，不连服务器）；下面是其中的三个画面，点标签或按左右键切换。演示车型均为虚构。</p>
+  <nav class="links" aria-label="链接">
+    <a href="https://github.com/feihuiwu2022/cabin-test-agent">源代码（GitHub）</a>
+    <a class="go" href="demo/">▶ 打开交互演示</a>
+    <a href="#arch">架构</a>
+    <a href="https://github.com/feihuiwu2022/cabin-test-agent/blob/main/docs/ARCHITECTURE.md">架构说明（文档）</a>
+  </nav>
+
+  <div class="tabs" role="tablist" aria-label="演示步骤"></div>
+  <section class="step" aria-live="polite">
+    <img id="shot" alt="">
+    <div class="note">
+      <h2 id="title"></h2>
+      <p id="desc"></p>
+      <ul id="points"></ul>
+      <div class="nav"><button id="prev" type="button">上一步</button><button id="next" type="button">下一步</button></div>
+    </div>
+  </section>
+
+  <h2 id="arch" class="sec">架构</h2>
+  <figure class="diagram"><img src="architecture.svg" alt="CabinPilot 架构图：浏览器连接台架本地页面和云端；云端包含用例生产线、判定与缺陷、对话网关、执行调度，经模型网关调用大模型；台架 Agent 领取任务并在车机上执行"></figure>
+  <section class="arch" aria-label="组成">
+    <div><b>云端</b><span>FastAPI。对话网关（模型工具调用）、PRD → 用例生成与审核、测试代码（TaskPlan）、执行调度、视觉 / 语音判定、缺陷与报告。</span></div>
+    <div><b>台架 Agent</b><span>每台台架 PC 一份，可打包成 Windows exe。领取任务、回放测试代码、采集截图 / 录音 / 日志、离线补传。</span></div>
+    <div><b>车机</b><span>真机走 ADB；没有真机时用内置的 SimCar 模拟车机（浏览器里的车机界面，含可注入的缺陷）。</span></div>
+  </section>
+
+  <footer>截图和交互演示都来自 SimCar 模拟车机上的真实运行。</footer>
+</main>
+<script>
+const STEPS = [
+  { tab: "① 打开即测试", img: "screenshots/1-home.png", title: "打开就是测试模式",
+    desc: "左边对话下达任务，中间车机投屏和执行轨迹，右边台架和可执行用例，底下是事件流。",
+    points: ["打字、按住说话，或免提（唤醒词“你好小禾” / “hello xiaohe”）", "助手只回答测试相关的问题，计划要人确认才执行", "没有真机时用内置 SimCar 模拟车机"] },
+  { tab: "② 系统设置调光", img: "screenshots/2-brightness.png", title: "用例 TC-DISP-001：系统设置里把屏幕亮度调到最亮",
+    desc: "回放测试代码：打开设置 → 显示 → 把亮度滑块拖到最右 → 读系统亮度值。",
+    points: ["控件按文字 / 控件 ID 多级定位", "视觉模型对比期望与截图", "规则断言：系统亮度 = 255、没有闪退"] },
+  { tab: "③ 语音开启空调", img: "screenshots/3-voice-hvac.png", title: "用例 TC-HVAC-001：语音打开空调",
+    desc: "播放车机唤醒词和“打开空调”的测试音频，收听车机播报，再看屏幕。",
+    points: ["测试音频由语音合成生成并按哈希缓存", "看屏幕 + 听播报双判定，记录响应时延", "不一致时自动查重并生成缺陷候选，人工审核后建单"] },
+];
+const tabs = document.querySelector(".tabs");
+let cur = 0;
+STEPS.forEach((s, i) => {
+  const b = document.createElement("button");
+  b.type = "button"; b.role = "tab"; b.textContent = s.tab;
+  b.onclick = () => show(i);
+  tabs.appendChild(b);
+});
+function show(i) {
+  cur = i; const s = STEPS[i];
+  document.getElementById("shot").src = s.img;
+  document.getElementById("shot").alt = s.title + " 截图";
+  document.getElementById("title").textContent = s.title;
+  document.getElementById("desc").textContent = s.desc;
+  document.getElementById("points").innerHTML = s.points.map(p => `<li>${p}</li>`).join("");
+  [...tabs.children].forEach((b, j) => b.setAttribute("aria-selected", String(j === i)));
+  document.getElementById("prev").disabled = i === 0;
+  document.getElementById("next").disabled = i === STEPS.length - 1;
+}
+document.getElementById("prev").onclick = () => show(Math.max(0, cur - 1));
+document.getElementById("next").onclick = () => show(Math.min(STEPS.length - 1, cur + 1));
+document.addEventListener("keydown", e => { if (e.key === "ArrowRight") show(Math.min(STEPS.length - 1, cur + 1)); if (e.key === "ArrowLeft") show(Math.max(0, cur - 1)); });
+STEPS.forEach(s => { const im = new Image(); im.src = s.img; });
+show(0);
+</script>
+</body>
+</html>

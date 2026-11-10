@@ -1,0 +1,23 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "cloud",
+      "runtimeExecutable": "uv",
+      "runtimeArgs": [
+        "run",
+        "cabin-cloud"
+      ],
+      "port": 8800
+    },
+    {
+      "name": "agent",
+      "runtimeExecutable": "uv",
+      "runtimeArgs": [
+        "run",
+        "cabin-agent"
+      ],
+      "port": 8810
+    }
+  ]
+}

@@ -1,0 +1,93 @@
+# 真机示例用例：系统设置把屏幕亮度调到 100%。适配 Android 11 原生结构的设置（实测 ZTE 7534N，720x1600）。
+# 运行：uv run python scripts/brightness_e2e.py
+case:
+  case_id: TC-ADB-DISP-001
+  title: 在显示设置中将屏幕亮度调到 100%
+  module: 设置/显示/亮度
+  page: 设置/显示
+  package: com.android.settings
+  precondition: 设备已解锁且亮屏，处于桌面；自动调整亮度已关闭；当前亮度低于 100%；设置应用不停留在子页面
+  steps: [打开系统设置, 点击"显示", 将亮度滑块拖到最右端, 确认亮度值]
+  expected: 亮度滑块停在最右端，系统亮度为 100%（screen_brightness=255），屏幕随之变亮，页面无报错、无闪退
+  type: 正向
+  priority: P1
+  channel: [adb]
+
+plan:
+  schema: cabin/taskplan/v1
+  case_id: TC-ADB-DISP-001
+  title: 在显示设置中将屏幕亮度调到 100%
+  requires: [adb]
+  timeout_s: 180
+  setup:
+    - action: key
+      key: home
+  steps:
+    - id: 1
+      action: tap
+      target:
+        selector:
+          text: 设置
+    - id: 2
+      action: wait
+      until:
+        text: 显示
+      timeout_s: 10
+    - id: 3
+      action: tap
+      target:
+        selector:
+          text: 显示
+    - id: 4
+      action: wait
+      until:
+        text: 自动调整亮度
+      timeout_s: 10
+    - id: 5
+      action: screenshot
+    - id: 6
+      action: drag
+      target:
+        selector:
+          key: android:id/seekbar
+      to:
+        ratio: 1.0
+    - id: 7
+      action: wait
+      seconds: 1
+    # 补拖一次：实测从亮度 102 起，第一次拖到底有时停在 249~251（约 98%），滑块看着已满格
+    - id: 8
+      action: drag
+      target:
+        selector:
+          key: android:id/seekbar
+      to:
+        ratio: 1.0
+    - id: 9
+      action: wait
+      seconds: 1
+    - id: 10
+      action: screenshot
+    - id: 11
+      action: read_value
+      read: settings:system/screen_brightness
+      save_as: brightness
+  assertions:
+    - id: a1
+      after_step: 10
+      type: vision
+      expected: 第一张截图亮度滑块未到最右端；第二张截图亮度滑块已到最右端（满格），页面仍是显示设置页，无报错弹窗
+      region: null
+    - id: a2
+      type: rule
+      rule: no_crash
+    - id: a3
+      type: value
+      key: brightness
+      op: eq
+      expected: 255
+  teardown:
+    - action: key
+      key: back
+    - action: key
+      key: home
